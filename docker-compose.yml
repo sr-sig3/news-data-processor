@@ -34,12 +34,12 @@ services:
         condition: service_healthy
     networks:
       - news-network
-      - kafka-network  # Kafka 컨테이너가 있는 네트워크
+      - news-stream-broker_kafka-network  # Kafka 컨테이너가 있는 네트워크
 
 networks:
   news-network:
     driver: bridge
-  kafka-network:
+  news-stream-broker_kafka-network:
     external: true  # 외부에서 생성된 Kafka 네트워크 사용
 
 volumes:
