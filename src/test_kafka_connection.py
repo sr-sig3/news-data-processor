@@ -2,6 +2,7 @@ from kafka import KafkaConsumer
 import structlog
 import os
 from dotenv import load_dotenv
+import json
 
 logger = structlog.get_logger()
 
@@ -24,9 +25,10 @@ def test_kafka_connection():
         consumer = KafkaConsumer(
             bootstrap_servers=bootstrap_servers,
             group_id=group_id,
-            auto_offset_reset='earliest',  # 가장 오래된 메시지부터 읽기
+            auto_offset_reset='earliest',
             enable_auto_commit=True,
-            value_deserializer=lambda x: x.decode('utf-8')
+            value_deserializer=lambda x: json.loads(x.decode('utf-8')),
+            consumer_timeout_ms=1000
         )
         
         # 사용 가능한 토픽 목록 확인
@@ -39,6 +41,7 @@ def test_kafka_connection():
         
         # 토픽 구독
         consumer.subscribe([topic])
+        logger.info("subscribed_to_topic", topic=topic)
         
         # 파티션 정보 확인
         partitions = consumer.partitions_for_topic(topic)
@@ -46,12 +49,23 @@ def test_kafka_connection():
         
         # 메시지 수신 시도
         logger.info("attempting_to_receive_messages")
-        for message in consumer:
-            logger.info("received_message", 
-                       topic=message.topic,
-                       partition=message.partition,
-                       offset=message.offset,
-                       value=message.value)
+        message_count = 0
+        while message_count < 5:  # 최대 5개의 메시지만 받기
+            try:
+                for message in consumer:
+                    logger.info("received_message", 
+                              topic=message.topic,
+                              partition=message.partition,
+                              offset=message.offset,
+                              value=message.value)
+                    message_count += 1
+                    if message_count >= 5:
+                        break
+            except Exception as e:
+                logger.error("message_receive_error", error=str(e))
+                break
+                
+        logger.info("test_completed", messages_received=message_count)
             
     except Exception as e:
         logger.error("kafka_connection_error", error=str(e))

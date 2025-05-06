@@ -60,10 +60,10 @@ class Database:
         try:
             news = News(
                 title=news_data['title'],
-                content=news_data['content'],
+                content=news_data.get('description', ''),
                 source=news_data['source'],
-                url=news_data['url'],
-                published_at=news_data['published_at']
+                url=news_data['link'],
+                published_at=news_data['pub_date']
             )
             session.add(news)
             session.commit()
@@ -72,7 +72,7 @@ class Database:
             return news.id
         except Exception as e:
             session.rollback()
-            logger.error("news_save_failed", error=str(e))
+            logger.error("news_save_failed", error=str(e), error_type=type(e).__name__)
             raise
         finally:
             session.close()
