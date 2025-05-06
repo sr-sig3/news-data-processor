@@ -29,4 +29,4 @@ ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
 # Command to run the application
-CMD ["python", "src/test_kafka_connection.py"] 
+CMD ["python", "src/consumer.py"] 
