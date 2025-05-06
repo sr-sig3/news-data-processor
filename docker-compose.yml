@@ -26,7 +26,7 @@ services:
     container_name: news_processor
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/news_db
-      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS:-host.docker.internal:9092}
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
       - KAFKA_TOPIC=${KAFKA_TOPIC:-news}
       - KAFKA_GROUP_ID=${KAFKA_GROUP_ID:-news-processor}
     depends_on:
@@ -34,12 +34,13 @@ services:
         condition: service_healthy
     networks:
       - news-network
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - kafka-network  # Kafka 컨테이너가 있는 네트워크
 
 networks:
   news-network:
     driver: bridge
+  kafka-network:
+    external: true  # 외부에서 생성된 Kafka 네트워크 사용
 
 volumes:
   postgres_data:
