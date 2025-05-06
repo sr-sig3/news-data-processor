@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:13
+    container_name: news_db
+    environment:
+      POSTGRES_DB: news_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres  # 실제 운영 환경에서는 더 강력한 비밀번호 사용
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - news-network
+
+  news-processor:
+    build: .
+    container_name: news_processor
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/news_db
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS:-host.docker.internal:9092}
+      - KAFKA_TOPIC=${KAFKA_TOPIC:-news}
+      - KAFKA_GROUP_ID=${KAFKA_GROUP_ID:-news-processor}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - news-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  news-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
