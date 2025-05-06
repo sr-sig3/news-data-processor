@@ -34,13 +34,14 @@ services:
         condition: service_healthy
     networks:
       - news-network
-      - news-stream-broker_kafka-network  # Kafka 컨테이너가 있는 네트워크
+      - news-stream-broker_kafka-network
 
 networks:
   news-network:
     driver: bridge
   news-stream-broker_kafka-network:
-    external: true  # 외부에서 생성된 Kafka 네트워크 사용
+    name: news-stream-broker_kafka-network
+    external: true
 
 volumes:
   postgres_data:
