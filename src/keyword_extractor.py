@@ -45,9 +45,19 @@ class KeywordExtractor:
     def extract_keywords(self, news_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """뉴스 데이터에서 키워드 추출"""
         try:
+            # 입력 데이터 로깅
+            logger.info("extracting_keywords_from_data",
+                       news_id=news_data['id'],
+                       title=news_data.get('title', ''),
+                       description=news_data.get('description', ''),
+                       content=news_data.get('content', ''))
+            
             # 제목과 본문을 결합하여 분석
-            combined_text = f"{news_data['title']} {news_data['content']}"
+            combined_text = f"{news_data['title']} {news_data.get('description', '')}"
             processed_text = self.preprocess_text(combined_text)
+            
+            # 전처리된 텍스트 로깅
+            logger.info("processed_text", text=processed_text)
             
             # TF-IDF 벡터화
             tfidf_matrix = self.vectorizer.fit_transform([processed_text])
@@ -56,6 +66,12 @@ class KeywordExtractor:
             # TF-IDF 점수가 높은 상위 키워드 추출
             tfidf_scores = tfidf_matrix.toarray()[0]
             top_indices = np.argsort(tfidf_scores)[-10:][::-1]  # 상위 10개 키워드
+            
+            # 점수 정보 로깅
+            logger.info("tfidf_scores_info",
+                       max_score=float(np.max(tfidf_scores)),
+                       min_score=float(np.min(tfidf_scores)),
+                       mean_score=float(np.mean(tfidf_scores)))
             
             keywords = []
             for idx in top_indices:
@@ -68,12 +84,14 @@ class KeywordExtractor:
             
             logger.info("keywords_extracted", 
                        news_id=news_data['id'],
-                       keyword_count=len(keywords))
+                       keyword_count=len(keywords),
+                       keywords=keywords)
             
             return keywords
             
         except Exception as e:
             logger.error("keyword_extraction_failed",
                         news_id=news_data['id'],
-                        error=str(e))
+                        error=str(e),
+                        error_type=type(e).__name__)
             return [] 
